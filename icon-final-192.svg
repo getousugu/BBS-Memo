@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" fill="#006699" rx="38.4"/>
+  <rect x="24" y="29" width="144" height="134" fill="#ffffff" rx="12" stroke="#0077aa" stroke-width="2"/>
+  <rect x="24" y="29" width="144" height="38" fill="#006699" rx="12"/>
+  <rect x="24" y="49" width="144" height="18" fill="#006699"/>
+  <text x="96" y="54" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">BBS Memo</text>
+  <circle cx="44" cy="89" r="6" fill="#006699"/>
+  <rect x="56" y="86" width="88" height="6" fill="#e6f2ff" rx="3"/>
+  <circle cx="44" cy="106" r="6" fill="#006699"/>
+  <rect x="56" y="103" width="68" height="6" fill="#e6f2ff" rx="3"/>
+  <circle cx="44" cy="123" r="6" fill="#006699"/>
+  <rect x="56" y="120" width="78" height="6" fill="#e6f2ff" rx="3"/>
+</svg>
