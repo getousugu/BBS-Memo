@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BBS Memo — 落ちるメモ帳</title>
+  <!-- Google Fonts & FontAwesome for icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Sawarabi+Gothic&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Style Sheets -->
+  <link rel="stylesheet" href="assets/style.css">
+  <!-- JSZip for Data Export/Import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="theme-normal">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <h1 class="logo" id="header-logo"><i class="fa-solid fa-comments"></i> BBS Memo <span class="logo-sub">落ちるリマインダー</span></h1>
+      <div class="header-actions">
+        <button id="btn-header-search" class="icon-btn" title="検索"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <button id="btn-header-archive" class="icon-btn" title="過去ログ"><i class="fa-solid fa-box-archive"></i></button>
+        <button id="btn-header-settings" class="icon-btn" title="設定"><i class="fa-solid fa-gear"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Global Banner Notification -->
+  <div id="global-warning-banner" class="warning-banner hidden">
+    <span class="warning-message"><i class="fa-solid fa-triangle-exclamation"></i> ストレージの使用量が80%を超えています！不要な過去ログを削除してください。</span>
+    <button id="btn-warning-action" class="banner-btn">管理を開く</button>
+    <button id="btn-warning-close" class="banner-close-btn">&times;</button>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+
+    <!-- 1. 板（カテゴリ）一覧画面 -->
+    <section id="view-board-list" class="view-section active">
+      <div class="view-header">
+        <h2><i class="fa-solid fa-folder-open"></i> 板一覧</h2>
+        <button id="btn-new-board" class="btn btn-primary"><i class="fa-solid fa-plus"></i> 新しい板を作る</button>
+      </div>
+      <div id="board-grid" class="board-grid">
+        <!-- JSで板リストが動的に挿入されます -->
+        <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 読み込み中...</div>
+      </div>
+    </section>
+
+    <!-- 2. スレッド一覧画面 -->
+    <section id="view-thread-list" class="view-section">
+      <div class="view-breadcrumbs">
+        <a href="#/" class="breadcrumb-link"><i class="fa-solid fa-house"></i> 板一覧</a>
+        <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+        <span id="thread-list-board-name" class="breadcrumb-current">板名</span>
+      </div>
+      <div class="board-desc-box">
+        <div class="board-desc-main">
+          <p id="thread-list-board-desc">板の説明がここに入ります。</p>
+          <div id="thread-list-board-tags" class="board-tags"></div>
+        </div>
+        <button id="btn-edit-board-from-list" class="btn btn-secondary btn-sm"><i class="fa-solid fa-pen"></i> 板を編集</button>
+      </div>
+      <div class="view-header flex-column md-flex-row">
+        <h2><i class="fa-solid fa-list"></i> スレッド一覧</h2>
+        <div class="thread-list-actions">
+          <button id="btn-toggle-archived-in-board" class="btn btn-secondary"><i class="fa-solid fa-box-archive"></i> 過去ログ: 非表示</button>
+          <button id="btn-sort-threads" class="btn btn-secondary"><i class="fa-solid fa-sort"></i> 並び替え: <span id="current-sort-label">作成日順</span></button>
+          <button id="btn-new-thread" class="btn btn-primary"><i class="fa-solid fa-pen-field"></i> 新規スレ作成</button>
+        </div>
+      </div>
+      <div id="thread-grid" class="thread-grid">
+        <!-- JSでスレッドリストが動的に挿入されます -->
+      </div>
+    </section>
+
+    <!-- 3. スレッド詳細画面 -->
+    <section id="view-thread-detail" class="view-section">
+      <div class="view-breadcrumbs">
+        <a href="#/" class="breadcrumb-link"><i class="fa-solid fa-house"></i> 板一覧</a>
+        <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+        <a id="thread-detail-board-link" href="#/board/1" class="breadcrumb-link">板名</a>
+        <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+        <span id="thread-detail-title-crumb" class="breadcrumb-current">スレッドタイトル</span>
+      </div>
+
+      <!-- スレ落ち警告・詳細ヘッダー -->
+      <div id="thread-detail-header" class="thread-detail-header">
+        <div class="thread-meta-top">
+          <span id="thread-status-badge" class="badge">板名</span>
+          <span id="thread-ai-badge" class="badge badge-ai hidden"><i class="fa-solid fa-robot"></i> AI稼働中</span>
+          <span id="thread-post-count-badge" class="badge badge-count">1 / 1000 レス</span>
+        </div>
+        <div class="thread-title-row">
+          <h2 id="thread-detail-title">スレッドタイトル</h2>
+          <button id="btn-edit-thread" class="btn btn-secondary btn-sm"><i class="fa-solid fa-gear"></i> スレ設定</button>
+        </div>
+        <div class="thread-timer-box">
+          <div class="timer-text-container">
+            <span><i class="fa-solid fa-hourglass-half"></i> 落ちるまで残り: <span id="thread-timer-countdown" class="timer-countdown">--:--:--</span></span>
+            <span id="thread-timer-percentage">100%</span>
+          </div>
+          <div class="timer-progress-bg">
+            <div id="thread-timer-progress-bar" class="timer-progress-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- レス一覧 -->
+      <div id="posts-container" class="posts-container">
+        <!-- JSでレスが挿入されます -->
+      </div>
+
+      <!-- 次スレ作成エリア (1000レス到達時のみ表示) -->
+      <div id="next-thread-suggestion" class="next-thread-box hidden">
+        <p><i class="fa-solid fa-triangle-exclamation"></i> このスレッドは最大レス数（1000）に到達したため、落ちました。</p>
+        <button id="btn-create-next-thread" class="btn btn-success"><i class="fa-solid fa-square-plus"></i> 設定を引き継いで次スレ（Part 2）を作成する</button>
+      </div>
+
+      <!-- スティッキー投稿フォーム -->
+      <div id="thread-post-form-container" class="post-form-container">
+        <form id="post-form" class="post-form">
+          <div class="form-collapsible-trigger" id="form-collapsible-btn">
+            <span class="trigger-text"><i class="fa-solid fa-user-pen"></i> 名前・メール欄を開く</span>
+            <i class="fa-solid fa-chevron-up"></i>
+          </div>
+          <div class="form-collapsible-content hidden" id="form-collapsible-fields">
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <input type="text" id="post-name" placeholder="名前（省略で名無しさん）" autocomplete="off">
+              </div>
+              <div class="form-group flex-1">
+                <input type="text" id="post-email" placeholder="メール（sage入力でsage投稿）" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <textarea id="post-body" placeholder="本文を入力してください（最大2000文字）" required></textarea>
+          </div>
+          
+          <!-- 添付ファイル選択後のプレビュー・設定 -->
+          <div id="file-attachment-preview" class="file-attachment-preview-box hidden">
+            <div class="preview-files-list" id="preview-files-list"></div>
+            <div class="attachment-actions">
+              <div class="compress-settings">
+                <label for="img-compress-quality"><i class="fa-solid fa-compress"></i> 画像圧縮:</label>
+                <select id="img-compress-quality">
+                  <option value="none">圧縮なし</option>
+                  <option value="0.8">軽め (80%品質)</option>
+                  <option value="0.6" selected>標準 (60%品質)</option>
+                  <option value="0.4">強め (40%品質)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions-row">
+            <div class="file-input-wrapper">
+              <button type="button" class="btn btn-secondary icon-btn-text" id="btn-trigger-file-select"><i class="fa-solid fa-paperclip"></i> 添付ファイル</button>
+              <input type="file" id="post-files" multiple accept="image/*,application/pdf,text/plain,text/markdown" class="hidden">
+              <span id="attached-files-counter" class="attached-counter">0 / 4 ファイル</span>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit-post"><i class="fa-solid fa-paper-plane"></i> 書き込む</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 4. 検索画面 -->
+    <section id="view-search" class="view-section">
+      <div class="view-header">
+        <h2><i class="fa-solid fa-magnifying-glass"></i> 全文検索</h2>
+      </div>
+      <div class="search-form-box">
+        <div class="search-input-group">
+          <input type="search" id="search-query" placeholder="キーワードを入力してください" autocomplete="off">
+          <button id="btn-execute-search" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> 検索</button>
+        </div>
+        
+        <!-- 検索フィルター -->
+        <div class="search-filters">
+          <div class="filter-group">
+            <label for="search-filter-board">対象の板</label>
+            <select id="search-filter-board">
+              <option value="all">すべての板</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="search-filter-status">ステータス</label>
+            <select id="search-filter-status">
+              <option value="all">すべて</option>
+              <option value="active" selected>アクティブスレのみ</option>
+              <option value="archived">過去ログのみ</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="search-filter-type">検索対象</label>
+            <select id="search-filter-type">
+              <option value="all" selected>全文（タイトル＋本文）</option>
+              <option value="title">スレタイトルのみ</option>
+              <option value="body">レス本文のみ</option>
+              <option value="id">ID</option>
+              <option value="name">投稿者名</option>
+              <option value="filename">添付ファイル名</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 検索履歴 -->
+      <div id="search-history-box" class="search-history-box">
+        <h4>最近の検索履歴</h4>
+        <div id="search-history-tags" class="history-tags">
+          <!-- JSで履歴が挿入されます -->
+        </div>
+      </div>
+
+      <!-- 検索結果 -->
+      <div class="search-results-section">
+        <h3>検索結果 <span id="search-results-count" class="results-count"></span></h3>
+        <div id="search-results-container" class="search-results-container">
+          <div class="empty-state"><i class="fa-solid fa-circle-info"></i> キーワードを入力して検索してください。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 過去ログ（アーカイブ）一覧画面 -->
+    <section id="view-archive-list" class="view-section">
+      <div class="view-header">
+        <h2><i class="fa-solid fa-box-archive"></i> 過去ログ一覧（アーカイブ）</h2>
+        <button id="btn-clear-all-archives" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> 過去ログを一括削除</button>
+      </div>
+      <p class="section-desc">保存期間を過ぎた、または1000レスに達したため落ちたスレッドの書庫です。閲覧専用となり書き込みはできません。</p>
+      <div id="archive-grid" class="thread-grid">
+        <!-- JSで過去ログスレリストが動的に挿入されます -->
+      </div>
+    </section>
+
+    <!-- 6. 設定画面 -->
+    <section id="view-settings" class="view-section">
+      <div class="view-header">
+        <h2><i class="fa-solid fa-gear"></i> アプリ設定</h2>
+      </div>
+
+      <div class="settings-container">
+        
+        <!-- API設定セクション -->
+        <div class="settings-card">
+          <h3><i class="fa-solid fa-key"></i> AIレス・API連携設定</h3>
+          
+          <div class="form-group">
+            <label for="settings-ai-provider">AIプロバイダ選択</label>
+            <select id="settings-ai-provider">
+              <option value="gemini">Google Gemini API</option>
+              <option value="anthropic">Anthropic Claude API</option>
+              <option value="openai">OpenAI GPT API</option>
+              <option value="openai-compat">OpenAI互換 API (DeepSeek, Groq, local等)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-api-key">APIキー</label>
+            <div class="input-with-btn">
+              <input type="password" id="settings-api-key" placeholder="APIキーを入力">
+              <button id="btn-toggle-key-visibility" class="btn btn-secondary icon-btn"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+
+          <div id="settings-endpoint-group" class="form-group hidden">
+            <label for="settings-api-endpoint">カスタムエンドポイント (APIベースURL)</label>
+            <input type="text" id="settings-api-endpoint" placeholder="https://api.openai.com/v1">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="settings-ai-model">使用モデル名</label>
+              <input type="text" id="settings-ai-model" placeholder="例: gemini-2.5-flash">
+            </div>
+            <div class="form-group flex-align-end">
+              <button id="btn-fetch-models" class="btn btn-secondary"><i class="fa-solid fa-rotate"></i> モデル取得</button>
+            </div>
+          </div>
+          
+          <div id="fetched-models-dropdown-group" class="form-group hidden">
+            <label for="settings-fetched-models-select">取得されたモデル一覧</label>
+            <select id="settings-fetched-models-select">
+              <!-- JSで動的にオプションが挿入されます -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-ai-name">デフォルトAI名前</label>
+            <input type="text" id="settings-ai-name" placeholder="AI◆bot">
+          </div>
+
+          <div class="form-group">
+            <label for="settings-ai-tone">デフォルトAI性格・口調（プロンプト指示）</label>
+            <textarea id="settings-ai-tone" rows="3" placeholder="あなたは2ch掲示板に長年住み着いているコテハン（固定ハンドルネーム）の住民です。煽り口調でありながら、ユーザーのタスクやメモに対して建設的なアドバイスを皮肉混じりに投稿してください。"></textarea>
+          </div>
+        </div>
+
+        <!-- 投稿・デフォルト設定セクション -->
+        <div class="settings-card">
+          <h3><i class="fa-solid fa-sliders"></i> 投稿・スレの初期設定</h3>
+          
+          <div class="form-group">
+            <label for="settings-default-name">デフォルト投稿者名</label>
+            <input type="text" id="settings-default-name" placeholder="名無しさん">
+          </div>
+
+          <div class="form-group">
+            <label for="settings-default-droptime">デフォルト落ち時間</label>
+            <select id="settings-default-droptime">
+              <option value="300">5分 (デバッグ用)</option>
+              <option value="3600">1時間 (短期)</option>
+              <option value="86400" selected>1日 (中期)</option>
+              <option value="604800">7日 (長期)</option>
+              <option value="2592000">30日 (長期)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-default-compress">デフォルト画像圧縮</label>
+            <select id="settings-default-compress">
+              <option value="none">圧縮なし</option>
+              <option value="0.8">軽め (80%)</option>
+              <option value="0.6" selected>標準 (60%)</option>
+              <option value="0.4">強め (40%)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 表示・テーマ設定セクション -->
+        <div class="settings-card">
+          <h3><i class="fa-solid fa-palette"></i> 表示設定</h3>
+          
+          <div class="form-group">
+            <label for="settings-theme">テーマ</label>
+            <select id="settings-theme">
+              <option value="normal" selected>ノーマル (2ch風レトロ)</option>
+              <option value="dark">ダークモード (黒板風ギーク)</option>
+              <option value="pink">さくら (レトロピンク)</option>
+              <option value="geek">クラシックグリーン (ターミナル風)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-fontsize">フォントサイズ</label>
+            <select id="settings-fontsize">
+              <option value="small">小 (13px)</option>
+              <option value="medium" selected>中 (15px)</option>
+              <option value="large">大 (17px)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-aa-font">AA（アスキーアート）表示用フォント</label>
+            <input type="text" id="settings-aa-font" placeholder="'Mona', 'MS PGothic', monospace">
+          </div>
+
+          <div class="form-group">
+            <label for="settings-warn-threshold">スレ落ち残り時間の警告閾値（%）</label>
+            <input type="number" id="settings-warn-threshold" min="5" max="50" value="20">
+          </div>
+        </div>
+
+        <!-- ストレージ・データ管理セクション -->
+        <div class="settings-card">
+          <h3><i class="fa-solid fa-database"></i> データ管理 & ストレージ使用量</h3>
+          
+          <!-- ストレージ使用量ダッシュボード -->
+          <div class="storage-dashboard">
+            <div class="storage-progress-wrapper">
+              <div class="storage-text-info">
+                <span>ストレージ使用量</span>
+                <span id="storage-details">計量中...</span>
+              </div>
+              <div class="storage-bar-bg">
+                <div id="storage-bar-fill" class="storage-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <button id="btn-recalculate-storage" class="btn btn-secondary btn-sm"><i class="fa-solid fa-rotate"></i> 今すぐ再計測</button>
+          </div>
+
+          <div class="data-actions-grid">
+            <button id="btn-export-all" class="btn btn-success"><i class="fa-solid fa-file-export"></i> 全データをエクスポート (ZIP)</button>
+            
+            <div class="import-wrapper">
+              <button id="btn-trigger-import" class="btn btn-secondary"><i class="fa-solid fa-file-import"></i> データをインポート</button>
+              <input type="file" id="import-file" accept=".zip,application/json" class="hidden">
+            </div>
+
+            <button id="btn-delete-search-history" class="btn btn-secondary"><i class="fa-solid fa-clock-rotate-left"></i> 検索履歴を削除</button>
+            <button id="btn-factory-reset" class="btn btn-danger"><i class="fa-solid fa-circle-exclamation"></i> 全データの初期化</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation Bottom Bar (For Mobile) -->
+  <nav class="app-nav-bar">
+    <a href="#/" class="nav-item active" id="nav-boards"><i class="fa-solid fa-folder-open"></i><span>板一覧</span></a>
+    <a href="#/search" class="nav-item" id="nav-search"><i class="fa-solid fa-magnifying-glass"></i><span>検索</span></a>
+    <a href="#/archive" class="nav-item" id="nav-archive"><i class="fa-solid fa-box-archive"></i><span>過去ログ</span></a>
+    <a href="#/settings" class="nav-item" id="nav-settings"><i class="fa-solid fa-gear"></i><span>設定</span></a>
+  </nav>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: 新しい板の作成 -->
+  <div id="modal-create-board" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus"></i> 新しい板を作る</h3>
+        <button class="modal-close-btn" id="btn-close-board-modal">&times;</button>
+      </div>
+      <form id="form-create-board">
+        <div class="form-group">
+          <label for="board-name">板の名前 <span class="required">*</span></label>
+          <input type="text" id="board-name" placeholder="例: 勉強・仕事用のタスク" required max="20">
+        </div>
+        <div class="form-group">
+          <label for="board-desc">説明文</label>
+          <textarea id="board-desc" rows="2" placeholder="この板の用途を説明してください。" max="100"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="board-tags-input">タグ（カンマ区切りで複数）</label>
+          <input type="text" id="board-tags-input" placeholder="例: 仕事, タスク, メモ">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-board-modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">板を作成</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: 新規スレッドの作成 -->
+  <div id="modal-create-thread" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-field"></i> 新規スレッドの作成</h3>
+        <button class="modal-close-btn" id="btn-close-thread-modal">&times;</button>
+      </div>
+      <form id="form-create-thread">
+        <input type="hidden" id="thread-board-id">
+        <div class="form-group">
+          <label for="thread-title">スレッドのタイトル <span class="required">*</span></label>
+          <input type="text" id="thread-title" placeholder="スレタイトルを入力（例: 今週のTODO管理）" required max="50">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="thread-droptime">落ち時間設定 <span class="required">*</span></label>
+            <select id="thread-droptime">
+              <optgroup label="超短期">
+                <option value="300">5分 (デバッグ・短期タスク用)</option>
+                <option value="900">15分</option>
+                <option value="1800">30分</option>
+              </optgroup>
+              <optgroup label="短期">
+                <option value="3600">1時間</option>
+                <option value="10800">3時間</option>
+                <option value="21600">6時間</option>
+              </optgroup>
+              <optgroup label="中期" selected>
+                <option value="43200">12時間</option>
+                <option value="86400">1日</option>
+                <option value="259200">3日</option>
+              </optgroup>
+              <optgroup label="長期">
+                <option value="604800">7日</option>
+                <option value="1209600">14日</option>
+                <option value="2592000">30日</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="thread-tags-input">スレのタグ</label>
+            <input type="text" id="thread-tags-input" placeholder="例: 重要, 買い物">
+          </div>
+        </div>
+
+        <div class="settings-divider">AIレス設定</div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="thread-ai-enabled">
+          <label for="thread-ai-enabled"><strong>AIからの自動返信を有効にする</strong></label>
+        </div>
+
+        <div id="thread-ai-settings-sub" class="hidden">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="thread-ai-interval">返信間隔</label>
+              <select id="thread-ai-interval">
+                <option value="2">2分 (デバッグ用)</option>
+                <option value="10">数分 (10分)</option>
+                <option value="30">数十分 (30分)</option>
+                <option value="180">数時間 (3時間)</option>
+                <option value="1440">数日 (1日)</option>
+                <option value="random">ランダム (10分〜1日)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="thread-ai-influence">AIレスによるスレ落ち影響</label>
+              <select id="thread-ai-influence">
+                <option value="reset" selected>通常レスと同じ（タイマーをリセット）</option>
+                <option value="sage">sage扱い（タイマーをリセットしない）</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="thread-ai-name-custom">AIの名前</label>
+            <input type="text" id="thread-ai-name-custom" placeholder="AI◆bot (空欄で設定のデフォルトを使用)">
+          </div>
+
+          <div class="form-group">
+            <label for="thread-ai-prompt-custom">AIの性格・役割指示（空欄でデフォルト使用）</label>
+            <textarea id="thread-ai-prompt-custom" rows="2" placeholder="例: 面倒見のいいお姉さん風の口調で。"></textarea>
+          </div>
+        </div>
+
+        <div class="settings-divider">最初の書き込み</div>
+
+        <div class="form-group">
+          <label for="thread-first-post-name">投稿者名</label>
+          <input type="text" id="thread-first-post-name" placeholder="名無しさん">
+        </div>
+
+        <div class="form-group">
+          <label for="thread-first-post-body">本文（スレの主旨・最初のメモ内容） <span class="required">*</span></label>
+          <textarea id="thread-first-post-body" rows="3" placeholder="ここに入力したテキストがスレッドの1番目の書き込み（>>1）になります。" required></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-thread-modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">スレッド作成</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: AA (アスキーアート) 変換モーダル -->
+  <div id="modal-aa-converter" class="modal-overlay">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-font"></i> 画像のAA（アスキーアート）変換</h3>
+        <button class="modal-close-btn" id="btn-close-aa-modal">&times;</button>
+      </div>
+      <div class="modal-body-content">
+        <div class="aa-settings-bar">
+          <div class="form-group">
+            <label for="aa-style-select">AAの文字タイプ</label>
+            <select id="aa-style-select">
+              <option value="dot">ドット系 (░ ▒ ▓ █)</option>
+              <option value="symbol" selected>標準記号系 (. : ; i l I など)</option>
+              <option value="custom">カスタム（自由入力）</option>
+            </select>
+          </div>
+          <div id="aa-custom-chars-group" class="form-group hidden">
+            <label for="aa-custom-chars">使用する文字（密度の薄い順）</label>
+            <input type="text" id="aa-custom-chars" value=" .:-=+*#%@">
+          </div>
+          <div class="form-group">
+            <label for="aa-width-select">解像度 (横文字数)</label>
+            <select id="aa-width-select">
+              <option value="30">30文字 (小)</option>
+              <option value="60" selected>60文字 (標準)</option>
+              <option value="100">100文字 (大・PC向け)</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group no-margin">
+            <input type="checkbox" id="aa-invert">
+            <label for="aa-invert">白黒反転</label>
+          </div>
+        </div>
+
+        <div class="aa-preview-area">
+          <pre id="aa-result-text" class="aa-font-render">AAのプレビューがここに表示されます...</pre>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-aa-modal">キャンセル</button>
+        <button type="button" class="btn btn-success" id="btn-insert-aa"><i class="fa-solid fa-file-import"></i> 本文に挿入する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: 画像等拡大プレビュー -->
+  <div id="modal-image-preview" class="modal-overlay modal-dark">
+    <div class="modal-close-overlay" id="btn-close-img-preview-overlay"></div>
+    <div class="modal-content modal-img-content">
+      <button class="modal-close-btn" id="btn-close-img-preview-btn">&times;</button>
+      <img id="img-preview-src" src="" alt="添付画像拡大プレビュー">
+      <div id="img-preview-caption" class="img-caption"></div>
+    </div>
+  </div>
+
+  <!-- Modal 1b: 板の編集 -->
+  <div id="modal-edit-board" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square"></i> 板を編集する</h3>
+        <button class="modal-close-btn" id="btn-close-edit-board-modal">&times;</button>
+      </div>
+      <form id="form-edit-board">
+        <input type="hidden" id="edit-board-id">
+        <div class="form-group">
+          <label for="edit-board-name">板の名前 <span class="required">*</span></label>
+          <input type="text" id="edit-board-name" required max="20">
+        </div>
+        <div class="form-group">
+          <label for="edit-board-desc">説明文</label>
+          <textarea id="edit-board-desc" rows="2" placeholder="板の用途を説明してください。" max="100"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="edit-board-tags-input">タグ（カンマ区切りで複数）</label>
+          <input type="text" id="edit-board-tags-input" placeholder="例: 仕事, タスク, メモ">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit-board-modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">変更を保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: スレッド設定の編集 -->
+  <div id="modal-edit-thread" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-gear"></i> スレッド設定の編集</h3>
+        <button class="modal-close-btn" id="btn-close-edit-thread-modal">&times;</button>
+      </div>
+      <form id="form-edit-thread">
+        <input type="hidden" id="edit-thread-id">
+        <div class="form-group">
+          <label for="edit-thread-title">スレッドのタイトル <span class="required">*</span></label>
+          <input type="text" id="edit-thread-title" required max="50">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="edit-thread-droptime">落ち時間設定 <span class="required">*</span></label>
+            <select id="edit-thread-droptime">
+              <optgroup label="超短期">
+                <option value="300">5分</option>
+                <option value="900">15分</option>
+                <option value="1800">30分</option>
+              </optgroup>
+              <optgroup label="短期">
+                <option value="3600">1時間</option>
+                <option value="10800">3時間</option>
+                <option value="21600">6時間</option>
+              </optgroup>
+              <optgroup label="中期">
+                <option value="43200">12時間</option>
+                <option value="86400">1日</option>
+                <option value="259200">3日</option>
+              </optgroup>
+              <optgroup label="長期">
+                <option value="604800">7日</option>
+                <option value="1209600">14日</option>
+                <option value="2592000">30日</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="edit-thread-tags-input">スレのタグ</label>
+            <input type="text" id="edit-thread-tags-input" placeholder="例: 重要, 買い物">
+          </div>
+        </div>
+
+        <div class="settings-divider">AIレス設定</div>
+
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="edit-thread-ai-enabled">
+          <label for="edit-thread-ai-enabled"><strong>AIからの自動返信を有効にする</strong></label>
+        </div>
+
+        <div id="edit-thread-ai-settings-sub" class="hidden">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="edit-thread-ai-interval">返信間隔</label>
+              <select id="edit-thread-ai-interval">
+                <option value="2">2分 (デバッグ用)</option>
+                <option value="10">数分 (10分)</option>
+                <option value="30">数十分 (30分)</option>
+                <option value="180">数時間 (3時間)</option>
+                <option value="1440">数日 (1日)</option>
+                <option value="random">ランダム (10分〜1日)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="edit-thread-ai-influence">AIレスによるスレ落ち影響</label>
+              <select id="edit-thread-ai-influence">
+                <option value="reset">通常レスと同じ（タイマーをリセット）</option>
+                <option value="sage">sage扱い（タイマーをリセットしない）</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-thread-ai-name-custom">AIの名前</label>
+            <input type="text" id="edit-thread-ai-name-custom" placeholder="AI◆bot">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-thread-ai-prompt-custom">AIの性格・役割指示（カスタムプロンプト）</label>
+            <textarea id="edit-thread-ai-prompt-custom" rows="3" placeholder="AIへの指示内容を入力してください。"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit-thread-modal">キャンセル</button>
+          <button type="submit" class="btn btn-primary">設定を保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="assets/app.js"></script>
+</body>
+</html>
