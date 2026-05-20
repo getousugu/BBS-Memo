@@ -28,7 +28,7 @@ class DBManager {
 
       request.onupgradeneeded = (e) => {
         const db = e.target.result;
-        
+
         // Boards Store
         if (!db.objectStoreNames.contains("boards")) {
           const boardsStore = db.createObjectStore("boards", { keyPath: "id", autoIncrement: true });
@@ -110,7 +110,7 @@ class DBManager {
       const transaction = this.db.transaction(storeName, "readwrite");
       const store = transaction.objectStore(storeName);
       const request = store.add(value);
-      
+
       transaction.oncomplete = () => resolve(request.result);
       transaction.onerror = (e) => reject(e);
     });
@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Start Storage Dashboard recals
     updateStorageDashboard();
-    
+
     // Check storage warnings on startup
     checkStorageWarningLimit();
 
@@ -268,7 +268,7 @@ function applySettingsToDOM() {
   // Apply theme class
   document.body.className = "";
   document.body.classList.add(`theme-${state.settings.theme}`);
-  
+
   // Apply font size class
   document.body.classList.add(`font-${state.settings.fontSize}`);
 
@@ -280,7 +280,7 @@ function applySettingsToDOM() {
   document.getElementById("settings-default-compress").value = state.settings.defaultCompress;
   document.getElementById("settings-warn-threshold").value = state.settings.warnThreshold;
   document.getElementById("settings-aa-font").value = state.settings.aaFont;
-  
+
   // Set AI settings states
   document.getElementById("settings-ai-provider").value = state.settings.aiProvider;
   document.getElementById("settings-api-key").value = state.settings.aiKey;
@@ -305,7 +305,7 @@ function toggleEndpointGroupVisibility() {
 // SPA Router
 async function handleRouting() {
   const hash = window.location.hash || "#/";
-  
+
   // Clear any active page running intervals
   clearInterval(state.threadCountdownInterval);
   state.activeTimers.forEach(t => clearInterval(t));
@@ -317,7 +317,7 @@ async function handleRouting() {
   // Match views
   if (hash === "#/" || hash.startsWith("#/board")) {
     document.getElementById("nav-boards").classList.add("active");
-    
+
     if (hash.startsWith("#/board/")) {
       // Thread list for specific Board
       const boardId = parseInt(hash.replace("#/board/", ""));
@@ -388,7 +388,7 @@ async function renderBoardList() {
     container.innerHTML = "";
     boards.forEach(board => {
       const activeThreadsCount = threads.filter(t => t.boardId === board.id && !t.isArchived).length;
-      
+
       const card = document.createElement("div");
       card.className = "board-card";
       card.onclick = () => window.location.hash = `#/board/${board.id}`;
@@ -396,8 +396,8 @@ async function renderBoardList() {
       // Tags HTML
       let tagsHtml = "";
       if (board.tags && board.tags.length > 0) {
-        tagsHtml = `<div class="board-tags">` + 
-          board.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") + 
+        tagsHtml = `<div class="board-tags">` +
+          board.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") +
           `</div>`;
       }
 
@@ -457,7 +457,7 @@ async function renderThreadList(boardId) {
   // Breadcrumbs & Board headers
   document.getElementById("thread-list-board-name").textContent = board.name;
   document.getElementById("thread-list-board-desc").textContent = board.description || "説明はありません。";
-  
+
   const tagsContainer = document.getElementById("thread-list-board-tags");
   tagsContainer.innerHTML = "";
   if (board.tags && board.tags.length > 0) {
@@ -494,7 +494,7 @@ async function renderThreadList(boardId) {
   }
 
   grid.innerHTML = "";
-  
+
   // Render thread items
   threads.forEach(thread => {
     const card = document.createElement("div");
@@ -565,8 +565,8 @@ async function renderThreadList(boardId) {
     // Tag list
     let tagsHtml = "";
     if (thread.tags && thread.tags.length > 0) {
-      tagsHtml = `<div class="board-tags">` + 
-        thread.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") + 
+      tagsHtml = `<div class="board-tags">` +
+        thread.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") +
         `</div>`;
     }
 
@@ -597,7 +597,7 @@ async function renderThreadList(boardId) {
       const currentElapsed = now - thread.lastPostAt;
       const currentRemaining = Math.max(0, limitMs - currentElapsed);
       const currentPct = Math.round((currentRemaining / limitMs) * 100);
-      
+
       const txtEl = document.getElementById(`timer-text-${thread.id}`);
       const barEl = document.getElementById(`timer-bar-${thread.id}`);
 
@@ -656,7 +656,7 @@ async function renderThreadDetail(threadId) {
     // Header updates
     document.getElementById("thread-detail-title").textContent = thread.title;
     document.getElementById("thread-status-badge").textContent = board ? board.name : "一般板";
-    
+
     const aiBadge = document.getElementById("thread-ai-badge");
     if (thread.aiEnabled) {
       aiBadge.classList.remove("hidden");
@@ -698,9 +698,9 @@ async function renderThreadDetail(threadId) {
       const isAI = post.email && post.email.includes("bot") || post.name.includes("◆bot");
       const nameClass = isAI ? "post-name ai-post" : "post-name";
       const emailHtml = post.email ? `[<span class="post-email">${escapeHTML(post.email)}</span>]` : "";
-      
+
       const formattedDate = formatPostDate(post.createdAt);
-      
+
       // Formatting body links/quotes
       const formattedBody = formatPostBody(post.content);
 
@@ -738,7 +738,7 @@ async function renderThreadDetail(threadId) {
         <div class="post-body">${formattedBody}</div>
         ${attachmentsHtml}
       `;
-      
+
       // Double tap or longpress insertion of anchors
       postCard.addEventListener("dblclick", () => insertAnchorIntoForm(post.postNumber));
       // Standard mobile hold insertion
@@ -835,8 +835,8 @@ async function renderArchiveList() {
 
       let tagsHtml = "";
       if (thread.tags && thread.tags.length > 0) {
-        tagsHtml = `<div class="board-tags">` + 
-          thread.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") + 
+        tagsHtml = `<div class="board-tags">` +
+          thread.tags.map(t => `<span class="tag-badge">${escapeHTML(t)}</span>`).join("") +
           `</div>`;
       }
 
@@ -883,7 +883,7 @@ async function renderSearchPage() {
   // Populate Board filters
   const filterBoard = document.getElementById("search-filter-board");
   filterBoard.innerHTML = `<option value="all">すべての板</option>`;
-  
+
   const boards = await state.db.getAll("boards");
   boards.forEach(b => {
     const opt = document.createElement("option");
@@ -899,7 +899,7 @@ async function renderSearchPage() {
 function renderSearchHistoryChips() {
   const tagBox = document.getElementById("search-history-tags");
   tagBox.innerHTML = "";
-  
+
   if (state.searchHistory.length === 0) {
     tagBox.innerHTML = `<span class="text-muted" style="font-size: 11px;">履歴はありません。</span>`;
     return;
@@ -926,15 +926,15 @@ async function renderSettingsPage() {
 async function updateStorageDashboard() {
   const detailsEl = document.getElementById("storage-details");
   const fillBar = document.getElementById("storage-bar-fill");
-  
+
   if (navigator.storage && navigator.storage.estimate) {
     try {
       const estimate = await navigator.storage.estimate();
       const usedBytes = estimate.usage || 0;
       const limitBytes = estimate.quota || 500 * 1024 * 1024; // fallback 500MB
-      
+
       const pct = Math.round((usedBytes / limitBytes) * 100) || 0;
-      
+
       detailsEl.textContent = `${formatBytes(usedBytes)} / ${formatBytes(limitBytes)} (${pct}%)`;
       fillBar.style.width = `${pct}%`;
 
@@ -959,13 +959,13 @@ async function checkStorageWarningLimit() {
       const estimate = await navigator.storage.estimate();
       const pct = Math.round((estimate.usage || 0) / (estimate.quota || 1) * 100);
       const banner = document.getElementById("global-warning-banner");
-      
+
       if (pct >= 80) {
         banner.classList.remove("hidden");
       } else {
         banner.classList.add("hidden");
       }
-    } catch(e) {}
+    } catch (e) { }
   }
 }
 
@@ -1089,7 +1089,7 @@ async function registerNGID(event, id) {
     alert("AIのIDはNG登録できません。");
     return;
   }
-  
+
   if (confirm(`ID: ${id} をNG登録しますか？\n（このIDの書き込みはすべて非表示になります）`)) {
     await state.db.add("ng_list", { type: "id", value: id, createdAt: Date.now() });
     alert("NGIDに登録しました。");
@@ -1102,7 +1102,7 @@ async function registerNGID(event, id) {
 // Helper formats
 function escapeHTML(str) {
   if (!str) return "";
-  return str.replace(/[&<>'"]/g, 
+  return str.replace(/[&<>'"]/g,
     tag => ({
       '&': '&amp;',
       '<': '&lt;',
@@ -1167,7 +1167,7 @@ function formatBytes(bytes) {
 // 6. Form Handlers & Modal Windows Controls
 // ==========================================================================
 function setupGlobalEventListeners() {
-  
+
   // Header Actions Routing triggers
   document.getElementById("btn-header-search").onclick = () => window.location.hash = "#/search";
   document.getElementById("btn-header-archive").onclick = () => window.location.hash = "#/archive";
@@ -1190,8 +1190,8 @@ function setupGlobalEventListeners() {
   // --- Modal: Board Create ---
   const modalBoard = document.getElementById("modal-create-board");
   document.getElementById("btn-new-board").onclick = () => modalBoard.classList.add("active");
-  document.getElementById("btn-close-board-modal").onclick = 
-  document.getElementById("btn-cancel-board-modal").onclick = () => modalBoard.classList.remove("active");
+  document.getElementById("btn-close-board-modal").onclick =
+    document.getElementById("btn-cancel-board-modal").onclick = () => modalBoard.classList.remove("active");
 
   document.getElementById("form-create-board").onsubmit = async (e) => {
     e.preventDefault();
@@ -1212,7 +1212,7 @@ function setupGlobalEventListeners() {
   // --- Modal: Board Edit ---
   const modalEditBoard = document.getElementById("modal-edit-board");
   document.getElementById("btn-close-edit-board-modal").onclick =
-  document.getElementById("btn-cancel-edit-board-modal").onclick = () => modalEditBoard.classList.remove("active");
+    document.getElementById("btn-cancel-edit-board-modal").onclick = () => modalEditBoard.classList.remove("active");
 
   document.getElementById("form-edit-board").onsubmit = async (e) => {
     e.preventDefault();
@@ -1245,17 +1245,17 @@ function setupGlobalEventListeners() {
   document.getElementById("btn-new-thread").onclick = () => {
     if (!state.activeBoardId) return;
     document.getElementById("thread-board-id").value = state.activeBoardId;
-    
+
     // Autofill defaults
     document.getElementById("thread-first-post-name").value = state.settings.defaultName;
     document.getElementById("thread-droptime").value = state.settings.defaultDropTime;
     document.getElementById("thread-ai-name-custom").placeholder = `${state.settings.aiDefaultName} (デフォルト)`;
-    
+
     modalThread.classList.add("active");
   };
-  
-  document.getElementById("btn-close-thread-modal").onclick = 
-  document.getElementById("btn-cancel-thread-modal").onclick = () => modalThread.classList.remove("active");
+
+  document.getElementById("btn-close-thread-modal").onclick =
+    document.getElementById("btn-cancel-thread-modal").onclick = () => modalThread.classList.remove("active");
 
   // Thread creation AI toggle sub-fields
   document.getElementById("thread-ai-enabled").onchange = (e) => {
@@ -1451,7 +1451,7 @@ function setupGlobalEventListeners() {
     if (!isSage) {
       thread.lastPostAt = Date.now();
     }
-    
+
     // Auto archive if reaches 1000 posts
     if (postNumber >= 1000) {
       thread.isArchived = true;
@@ -1489,10 +1489,10 @@ function setupGlobalEventListeners() {
 
     let nextIdx = options.findIndex(o => o.key === current) + 1;
     if (nextIdx >= options.length) nextIdx = 0;
-    
+
     const nextSort = options[nextIdx];
     sessionStorage.setItem("thread_sort_key", nextSort.key);
-    
+
     if (state.activeBoardId) {
       renderThreadList(state.activeBoardId);
     }
@@ -1501,8 +1501,8 @@ function setupGlobalEventListeners() {
   // --- Modal 3: AA Converter Trigger ---
   // We can convert selected image to AA
   const modalAA = document.getElementById("modal-aa-converter");
-  document.getElementById("btn-close-aa-modal").onclick = 
-  document.getElementById("btn-cancel-aa-modal").onclick = () => modalAA.classList.remove("active");
+  document.getElementById("btn-close-aa-modal").onclick =
+    document.getElementById("btn-cancel-aa-modal").onclick = () => modalAA.classList.remove("active");
 
   document.getElementById("aa-style-select").onchange = (e) => {
     const customGrp = document.getElementById("aa-custom-chars-group");
@@ -1521,17 +1521,17 @@ function setupGlobalEventListeners() {
   document.getElementById("btn-insert-aa").onclick = () => {
     const aaText = document.getElementById("aa-result-text").textContent;
     const bodyText = document.getElementById("post-body");
-    
+
     // Enwrap in standard markdown block or simple raw text with mona hint
     bodyText.value += `\n${aaText}\n`;
     modalAA.classList.remove("active");
   };
 
   // --- Modal 4: Image enlargement ---
-  document.getElementById("btn-close-img-preview-btn").onclick = 
-  document.getElementById("btn-close-img-preview-overlay").onclick = () => {
-    document.getElementById("modal-image-preview").classList.remove("active");
-  };
+  document.getElementById("btn-close-img-preview-btn").onclick =
+    document.getElementById("btn-close-img-preview-overlay").onclick = () => {
+      document.getElementById("modal-image-preview").classList.remove("active");
+    };
 
   // --- Search view trigger ---
   document.getElementById("btn-execute-search").onclick = () => executeSearch();
@@ -1546,7 +1546,7 @@ function setupGlobalEventListeners() {
       const posts = await state.db.getAll("posts");
 
       const archivedThreads = threads.filter(t => t.isArchived);
-      
+
       for (const t of archivedThreads) {
         // Delete thread posts
         const threadPosts = posts.filter(p => p.threadId === t.id);
@@ -1585,7 +1585,7 @@ function setupGlobalEventListeners() {
     const apiKey = document.getElementById("settings-api-key").value.trim();
     const endpoint = document.getElementById("settings-api-endpoint").value.trim();
     const btn = document.getElementById("btn-fetch-models");
-    
+
     if (!apiKey && provider !== "openai-compat") {
       alert("APIキーが入力されていません。");
       return;
@@ -1614,12 +1614,12 @@ function setupGlobalEventListeners() {
   // Save Settings panel configuration
   document.querySelectorAll("#view-settings input, #view-settings select, #view-settings textarea").forEach(el => {
     if (el.id === "import-file") return;
-    
+
     el.onchange = async () => {
       let key = "";
       let value = el.value;
 
-      switch(el.id) {
+      switch (el.id) {
         case "settings-theme": key = "theme"; break;
         case "settings-fontsize": key = "fontSize"; break;
         case "settings-default-name": key = "defaultName"; break;
@@ -1657,7 +1657,7 @@ function setupGlobalEventListeners() {
         await state.db.clear("settings");
         await state.db.clear("ng_list");
         localStorage.removeItem("bbs_search_history");
-        
+
         alert("データを完全にリセットしました。ページをリロードします。");
         window.location.hash = "#/";
         window.location.reload();
@@ -1681,7 +1681,7 @@ function setupGlobalEventListeners() {
   // --- Next Thread (Part 2) Handler ---
   document.getElementById("btn-create-next-thread").onclick = async () => {
     if (!state.activeThreadId) return;
-    
+
     try {
       const origThread = await state.db.get("threads", state.activeThreadId);
       if (!origThread) return;
@@ -1740,7 +1740,7 @@ function setupGlobalEventListeners() {
   // --- Modal: Thread Edit ---
   const modalEditThread = document.getElementById("modal-edit-thread");
   document.getElementById("btn-close-edit-thread-modal").onclick =
-  document.getElementById("btn-cancel-edit-thread-modal").onclick = () => modalEditThread.classList.remove("active");
+    document.getElementById("btn-cancel-edit-thread-modal").onclick = () => modalEditThread.classList.remove("active");
 
   // btn-edit-thread is inside the thread detail view; use event delegation
   document.getElementById("btn-edit-thread").onclick = () => {
@@ -1828,7 +1828,7 @@ function updateAttachedFilesUI() {
   state.attachedFiles.forEach((file, index) => {
     const item = document.createElement("div");
     item.className = "preview-file-item";
-    
+
     // Add AA button if image
     let aaBtnHtml = "";
     if (file.type.startsWith("image/")) {
@@ -1889,7 +1889,7 @@ function compressImage(file, quality) {
         ctx.drawImage(img, 0, 0, width, height);
 
         const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        
+
         // Approximate bytes size
         const head = dataUrl.indexOf(",") + 1;
         const sizeBytes = Math.round((dataUrl.length - head) * 0.75);
@@ -1961,10 +1961,10 @@ function regenerateAA() {
         const r = pixels[offset];
         const g = pixels[offset + 1];
         const b = pixels[offset + 2];
-        
+
         // Luminance formula
         const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        
+
         // Map brightness to chars
         const charIndex = Math.floor((brightness / 255) * (chars.length - 1));
         asciiStr += chars[charIndex];
@@ -2214,7 +2214,7 @@ async function fetchAPIModels(provider, apiKey, endpoint) {
 function populateFetchedModels(models) {
   const container = document.getElementById("fetched-models-dropdown-group");
   const select = document.getElementById("settings-fetched-models-select");
-  
+
   select.innerHTML = "";
   if (models.length === 0) {
     container.classList.add("hidden");
@@ -2228,7 +2228,7 @@ function populateFetchedModels(models) {
     opt.textContent = m;
     select.appendChild(opt);
   });
-  
+
   // Set first as default model selection
   document.getElementById("settings-ai-model").value = models[0];
 }
@@ -2268,7 +2268,7 @@ async function triggerAIResponse(thread) {
 
       // Retrieve full chat history
       const posts = await state.db.getPostsByThread(thread.id);
-      
+
       // Call LLM API
       const replyText = await callLLMAPI(activeThread, posts);
       if (!replyText) return;
@@ -2317,7 +2317,7 @@ async function callLLMAPI(thread, posts) {
   const model = thread.aiModel || state.settings.aiModel;
   const key = state.settings.aiKey;
   const customEndpoint = state.settings.aiEndpoint;
-  
+
   // Format Context prompt
   const systemPrompt = `System instructions: ${thread.aiTone || state.settings.aiDefaultPrompt}
   
@@ -2353,7 +2353,7 @@ async function callLLMAPI(thread, posts) {
   } else if (provider === "openai" || provider === "openai-compat") {
     const base = provider === "openai" ? "https://api.openai.com/v1" : (customEndpoint || "http://localhost:11434/v1");
     const url = `${base}/chat/completions`;
-    
+
     const headers = { "Content-Type": "application/json" };
     if (key) {
       headers["Authorization"] = `Bearer ${key}`;
@@ -2442,16 +2442,16 @@ async function exportAllDataZip() {
 
     // Storing files individually inside a separate directory
     const filesFolder = zip.folder("files");
-    
+
     for (const post of posts) {
       if (post.attachments && post.attachments.length > 0) {
         for (const att of post.attachments) {
           if (!att.data) continue;
-          
+
           // Split Base64 header and extract body
           const commaIdx = att.data.indexOf(",");
           const base64Body = att.data.substring(commaIdx + 1);
-          
+
           const filename = `${post.id}_${att.name}`;
           filesFolder.file(filename, base64Body, { base64: true });
         }
@@ -2460,12 +2460,12 @@ async function exportAllDataZip() {
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const downloadUrl = URL.createObjectURL(zipBlob);
-    
+
     const a = document.createElement("a");
     a.href = downloadUrl;
     a.download = `bbs_memo_export_${new Date().toISOString().substring(0, 10)}.zip`;
     a.click();
-    
+
     URL.revokeObjectURL(downloadUrl);
     alert("全データのエクスポートが完了しました。");
 
