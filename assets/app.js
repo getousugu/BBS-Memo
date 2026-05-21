@@ -2771,8 +2771,7 @@ function updateAuthStatus() {
 
 async function handleOAuthCallback(providerName, code) {
   try {
-    const redirectUri = window.location.origin + window.location.pathname;
-    
+const redirectUri = 'https://getousugu.github.io/BBS-Memo/';    
     switch (providerName) {
       case 'dropbox':
         await cloudSyncProvider.exchangeCodeForToken(code, redirectUri);
@@ -2888,7 +2887,7 @@ document.getElementById('btn-cloud-sync-auth').addEventListener('click', () => {
     return;
   }
   
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = 'https://getousugu.github.io/BBS-Memo/';
   const authUrl = cloudSyncProvider.getAuthUrl(redirectUri);
   window.location.href = authUrl;
 });
