@@ -60,6 +60,19 @@ class DBManager {
           const ngStore = db.createObjectStore("ng_list", { keyPath: "id", autoIncrement: true });
           ngStore.createIndex("type", "type", { unique: false });
         }
+
+        // Files Store (for attachments)
+        if (!db.objectStoreNames.contains("files")) {
+          const filesStore = db.createObjectStore("files", { keyPath: "id", autoIncrement: true });
+          filesStore.createIndex("postId", "postId", { unique: false });
+        }
+
+        // Archived Threads Store
+        if (!db.objectStoreNames.contains("archived_threads")) {
+          const archivedStore = db.createObjectStore("archived_threads", { keyPath: "id", autoIncrement: true });
+          archivedStore.createIndex("boardId", "boardId", { unique: false });
+          archivedStore.createIndex("archivedAt", "archivedAt", { unique: false });
+        }
       };
     });
   }
@@ -2652,3 +2665,261 @@ async function deleteThreadCascading(threadId) {
     alert("スレッドの削除中にエラーが発生しました。");
   }
 }
+
+// ==========================================================================
+// Cloud Storage Sync Integration
+// ==========================================================================
+
+let syncManager = null;
+let cloudSyncProvider = null;
+
+// Cloud provider configurations
+// Note: Using PKCE flow, so only client_id is needed (no client_secret)
+const CLOUD_PROVIDER_CONFIGS = {
+  dropbox: {
+    clientId: 'bnoni3mzlzax4ld'
+  },
+  onedrive: {
+    clientId: 'YOUR_ONEDRIVE_CLIENT_ID'
+  }
+};
+
+async function initializeCloudSync() {
+  try {
+    syncManager = new SyncManager(state.db);
+    await syncManager.loadMetadata();
+    
+    // Load saved sync settings
+    const syncSettings = await state.db.get('settings', 'cloud_sync_settings');
+    if (syncSettings) {
+      document.getElementById('cloud-sync-provider').value = syncSettings.provider || '';
+      document.getElementById('cloud-sync-mode').value = syncSettings.mode || 'bidirectional';
+      
+      if (syncSettings.options) {
+        document.getElementById('sync-boards').checked = syncSettings.options.boards !== false;
+        document.getElementById('sync-files').checked = syncSettings.options.files !== false;
+        document.getElementById('sync-settings').checked = syncSettings.options.settings !== false;
+        document.getElementById('sync-archives').checked = syncSettings.options.archives !== false;
+      }
+      
+      document.getElementById('auto-sync-enabled').checked = syncSettings.autoSync || false;
+      
+      // Update last sync time display
+      if (syncManager.syncMetadata.lastSyncTime) {
+        const lastSync = new Date(syncManager.syncMetadata.lastSyncTime);
+        document.getElementById('last-sync-time').textContent = lastSync.toLocaleString('ja-JP');
+      }
+      
+      // Initialize provider if saved
+      if (syncSettings.provider && syncSettings.tokens) {
+        await initializeProvider(syncSettings.provider, syncSettings.tokens);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to initialize cloud sync:', err);
+  }
+}
+
+async function initializeProvider(providerName, tokens = null) {
+  const config = CLOUD_PROVIDER_CONFIGS[providerName];
+  if (!config) {
+    console.error('Invalid provider:', providerName);
+    return;
+  }
+  
+  switch (providerName) {
+    case 'dropbox':
+      cloudSyncProvider = new DropboxProvider(config);
+      break;
+    case 'onedrive':
+      cloudSyncProvider = new OneDriveProvider(config);
+      break;
+    default:
+      console.error('Unsupported provider:', providerName);
+      return;
+  }
+  
+  if (tokens) {
+    cloudSyncProvider.initialize(tokens);
+  }
+  
+  syncManager.setProvider(cloudSyncProvider);
+  updateAuthStatus();
+}
+
+function updateAuthStatus() {
+  const authSection = document.getElementById('cloud-sync-auth-section');
+  const optionsSection = document.getElementById('cloud-sync-options-section');
+  const authStatusText = document.querySelector('.auth-status-text');
+  const authBtn = document.getElementById('btn-cloud-sync-auth');
+  const disconnectBtn = document.getElementById('btn-cloud-sync-disconnect');
+  
+  if (cloudSyncProvider && cloudSyncProvider.isAuthorized()) {
+    authStatusText.textContent = '認証済み';
+    authStatusText.style.color = 'var(--timer-ok)';
+    authBtn.classList.add('hidden');
+    disconnectBtn.classList.remove('hidden');
+    optionsSection.classList.remove('hidden');
+  } else {
+    authStatusText.textContent = '未認証';
+    authStatusText.style.color = 'var(--text-muted)';
+    authBtn.classList.remove('hidden');
+    disconnectBtn.classList.add('hidden');
+    optionsSection.classList.add('hidden');
+  }
+}
+
+async function handleOAuthCallback(providerName, code) {
+  try {
+    const redirectUri = window.location.origin + window.location.pathname;
+    
+    switch (providerName) {
+      case 'dropbox':
+        await cloudSyncProvider.exchangeCodeForToken(code, redirectUri);
+        break;
+      case 'onedrive':
+        await cloudSyncProvider.exchangeCodeForToken(code, redirectUri);
+        break;
+    }
+    
+    // Save tokens
+    await saveCloudSyncSettings();
+    updateAuthStatus();
+    
+    // Clear URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    alert('認証が完了しました');
+  } catch (err) {
+    console.error('OAuth callback error:', err);
+    alert('認証に失敗しました: ' + err.message);
+  }
+}
+
+async function saveCloudSyncSettings() {
+  const provider = document.getElementById('cloud-sync-provider').value;
+  const mode = document.getElementById('cloud-sync-mode').value;
+  const autoSync = document.getElementById('auto-sync-enabled').checked;
+  
+  const options = {
+    boards: document.getElementById('sync-boards').checked,
+    files: document.getElementById('sync-files').checked,
+    settings: document.getElementById('sync-settings').checked,
+    archives: document.getElementById('sync-archives').checked
+  };
+  
+  syncManager.setSyncMode(mode);
+  syncManager.setSyncOptions(options);
+  
+  const settings = {
+    id: 'cloud_sync_settings',
+    provider: provider,
+    mode: mode,
+    options: options,
+    autoSync: autoSync,
+    tokens: cloudSyncProvider ? cloudSyncProvider.getTokens() : null
+  };
+  
+  await state.db.put('settings', settings);
+  await syncManager.saveMetadata();
+}
+
+async function performSync() {
+  if (!syncManager || !cloudSyncProvider || !cloudSyncProvider.isAuthorized()) {
+    alert('クラウド同期を有効にするには、先に認証を行ってください');
+    return;
+  }
+  
+  const progressDiv = document.getElementById('sync-progress');
+  const progressBar = document.getElementById('sync-progress-bar');
+  const progressText = document.getElementById('sync-progress-text');
+  
+  progressDiv.classList.remove('hidden');
+  
+  try {
+    await syncManager.sync((percent, message) => {
+      progressBar.style.width = percent + '%';
+      progressText.textContent = message || '同期中...';
+    });
+    
+    await saveCloudSyncSettings();
+    
+    // Update last sync time
+    if (syncManager.syncMetadata.lastSyncTime) {
+      const lastSync = new Date(syncManager.syncMetadata.lastSyncTime);
+      document.getElementById('last-sync-time').textContent = lastSync.toLocaleString('ja-JP');
+    }
+    
+    progressText.textContent = '同期完了';
+    setTimeout(() => {
+      progressDiv.classList.add('hidden');
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Sync error:', err);
+    progressText.textContent = '同期失敗: ' + err.message;
+    setTimeout(() => {
+      progressDiv.classList.add('hidden');
+    }, 3000);
+  }
+}
+
+// Cloud sync event handlers
+document.getElementById('cloud-sync-provider').addEventListener('change', async (e) => {
+  const provider = e.target.value;
+  const authSection = document.getElementById('cloud-sync-auth-section');
+  
+  if (provider) {
+    authSection.classList.remove('hidden');
+    await initializeProvider(provider);
+  } else {
+    authSection.classList.add('hidden');
+    document.getElementById('cloud-sync-options-section').classList.add('hidden');
+    cloudSyncProvider = null;
+    syncManager.setProvider(null);
+  }
+  
+  await saveCloudSyncSettings();
+});
+
+document.getElementById('btn-cloud-sync-auth').addEventListener('click', () => {
+  if (!cloudSyncProvider) {
+    alert('プロバイダを選択してください');
+    return;
+  }
+  
+  const redirectUri = window.location.origin + window.location.pathname;
+  const authUrl = cloudSyncProvider.getAuthUrl(redirectUri);
+  window.location.href = authUrl;
+});
+
+document.getElementById('btn-cloud-sync-disconnect').addEventListener('click', async () => {
+  if (cloudSyncProvider) {
+    cloudSyncProvider.clearTokens();
+    await saveCloudSyncSettings();
+    updateAuthStatus();
+  }
+});
+
+document.getElementById('btn-cloud-sync-now').addEventListener('click', performSync);
+
+document.getElementById('cloud-sync-mode').addEventListener('change', saveCloudSyncSettings);
+document.getElementById('auto-sync-enabled').addEventListener('change', saveCloudSyncSettings);
+document.getElementById('sync-boards').addEventListener('change', saveCloudSyncSettings);
+document.getElementById('sync-files').addEventListener('change', saveCloudSyncSettings);
+document.getElementById('sync-settings').addEventListener('change', saveCloudSyncSettings);
+document.getElementById('sync-archives').addEventListener('change', saveCloudSyncSettings);
+
+// Check for OAuth callback on page load
+window.addEventListener('load', async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const provider = urlParams.get('provider');
+  
+  if (code && provider) {
+    await handleOAuthCallback(provider, code);
+  }
+  
+  // Initialize cloud sync
+  await initializeCloudSync();
+});

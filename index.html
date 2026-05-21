@@ -22,7 +22,7 @@
   <!-- Header -->
   <header class="app-header">
     <div class="header-container">
-      <h1 class="logo" id="header-logo"><i class="fa-solid fa-comments"></i> BBS Memo <span class="logo-sub">落ちるリマインダー</span></h1>
+      <h1 class="logo" id="header-logo"><i class="fa-solid fa-comments"></i> BBS Memo <span class="logo-sub">落ちるメモ</span></h1>
       <div class="header-actions">
         <button id="btn-header-search" class="icon-btn" title="検索"><i class="fa-solid fa-magnifying-glass"></i></button>
         <button id="btn-header-archive" class="icon-btn" title="過去ログ"><i class="fa-solid fa-box-archive"></i></button>
@@ -401,6 +401,71 @@
           </div>
         </div>
 
+        <!-- クラウド同期セクション -->
+        <div class="settings-card">
+          <h3><i class="fa-solid fa-cloud"></i> クラウドストレージ同期</h3>
+          
+          <div class="form-group">
+            <label for="cloud-sync-provider">同期先クラウドサービス</label>
+            <select id="cloud-sync-provider">
+              <option value="">選択してください</option>
+              <option value="dropbox">Dropbox</option>
+              <option value="onedrive" disabled>OneDrive（今後実装予定）</option>
+            </select>
+          </div>
+
+          <div id="cloud-sync-auth-section" class="hidden">
+            <div class="auth-status" id="cloud-sync-auth-status">
+              <span class="auth-status-text">未認証</span>
+              <button id="btn-cloud-sync-auth" class="btn btn-primary"><i class="fa-solid fa-link"></i> 認証</button>
+              <button id="btn-cloud-sync-disconnect" class="btn btn-secondary hidden"><i class="fa-solid fa-unlink"></i> 切断</button>
+            </div>
+          </div>
+
+          <div id="cloud-sync-options-section" class="hidden">
+            <div class="form-group">
+              <label for="cloud-sync-mode">同期モード</label>
+              <select id="cloud-sync-mode">
+                <option value="bidirectional">双方向同期</option>
+                <option value="backup">バックアップのみ（ローカル→クラウド）</option>
+                <option value="restore">復元のみ（クラウド→ローカル）</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>同期対象</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="sync-boards" checked> 板・スレ・レス</label>
+                <label><input type="checkbox" id="sync-files" checked> 添付ファイル</label>
+                <label><input type="checkbox" id="sync-settings" checked> 設定</label>
+                <label><input type="checkbox" id="sync-archives" checked> アーカイブ</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>自動同期</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="auto-sync-enabled"> オンライン復帰時に自動同期</label>
+              </div>
+            </div>
+
+            <div class="sync-status-info">
+              <p>最終同期: <span id="last-sync-time">-</span></p>
+            </div>
+
+            <div class="sync-actions">
+              <button id="btn-cloud-sync-now" class="btn btn-success"><i class="fa-solid fa-rotate"></i> 今すぐ同期</button>
+            </div>
+
+            <div id="sync-progress" class="sync-progress hidden">
+              <div class="progress-bar">
+                <div id="sync-progress-bar" class="progress-fill" style="width: 0%;"></div>
+              </div>
+              <p id="sync-progress-text">同期中...</p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -731,6 +796,12 @@
 
   <!-- Main JavaScript -->
   <script src="assets/app.js"></script>
+  
+  <!-- Cloud Storage Scripts -->
+  <script src="assets/cloud-storage/provider.js"></script>
+  <script src="assets/cloud-storage/dropbox.js"></script>
+  <script src="assets/cloud-storage/onedrive.js"></script>
+  <script src="assets/cloud-storage/sync-manager.js"></script>
   
   <!-- Service Worker Registration for PWA -->
   <script>

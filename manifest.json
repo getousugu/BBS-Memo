@@ -1,7 +1,7 @@
 {
   "name": "BBS Memo — 落ちるメモ帳",
   "short_name": "BBS Memo",
-  "description": "スレッドが落ちる掲示板型メモ・リマインダーアプリ",
+  "description": "スレッドが落ちる掲示板型メモアプリ",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#efefef",
