@@ -2996,8 +2996,19 @@ document.getElementById('sync-archives').addEventListener('change', saveCloudSyn
 
 // Check for OAuth callback on page load
 window.addEventListener('load', async () => {
+  // 1. Initialize cloud sync first (instantiates syncManager)
+  await initializeCloudSync();
+
+  // 2. Then check and process the OAuth callback
   const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get('code');
+  let code = urlParams.get('code');
+
+  // Fallback if the redirect appended query parameters after hash
+  if (!code && window.location.hash.includes('?')) {
+    const hashQuery = window.location.hash.split('?')[1];
+    const hashParams = new URLSearchParams(hashQuery);
+    code = hashParams.get('code');
+  }
 
   // Dropboxはcodeしか返さないため、プロバイダ名はlocalStorageから取得する
   const pendingProvider = localStorage.getItem('oauth_pending_provider');
@@ -3016,7 +3027,4 @@ window.addEventListener('load', async () => {
 
     await handleOAuthCallback(pendingProvider, code);
   }
-
-  // Initialize cloud sync
-  await initializeCloudSync();
 });
