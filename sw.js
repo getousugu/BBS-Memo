@@ -2,7 +2,7 @@
  * BBS Memo - Service Worker for PWA
  */
 
-const CACHE_NAME = 'bbs-memo-v3';
+const CACHE_NAME = 'bbs-memo-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

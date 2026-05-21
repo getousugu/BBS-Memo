@@ -6,7 +6,7 @@
 // 1. Database Manager (IndexedDB)
 // ==========================================================================
 class DBManager {
-  constructor(dbName = "BBSMemoDB", version = 1) {
+  constructor(dbName = "BBSMemoDB", version = 2) {
     this.dbName = dbName;
     this.version = version;
     this.db = null;
