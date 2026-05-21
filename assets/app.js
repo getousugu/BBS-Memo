@@ -2881,14 +2881,14 @@ document.getElementById('cloud-sync-provider').addEventListener('change', async 
   await saveCloudSyncSettings();
 });
 
-document.getElementById('btn-cloud-sync-auth').addEventListener('click', () => {
+document.getElementById('btn-cloud-sync-auth').addEventListener('click', async () => {
   if (!cloudSyncProvider) {
     alert('プロバイダを選択してください');
     return;
   }
   
   const redirectUri = 'https://getousugu.github.io/BBS-Memo/';
-  const authUrl = cloudSyncProvider.getAuthUrl(redirectUri);
+  const authUrl = await cloudSyncProvider.getAuthUrl(redirectUri);
   window.location.href = authUrl;
 });
 
