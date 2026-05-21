@@ -2719,7 +2719,9 @@ async function initializeCloudSync() {
       }
       
       // Initialize provider if saved
-      if (syncSettings.provider && syncSettings.tokens) {
+      if (syncSettings.provider) {
+        const authSection = document.getElementById('cloud-sync-auth-section');
+        if (authSection) authSection.classList.remove('hidden');
         await initializeProvider(syncSettings.provider, syncSettings.tokens);
       }
     }
