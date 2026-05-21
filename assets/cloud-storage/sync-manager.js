@@ -279,7 +279,12 @@ class SyncManager {
       if (this.syncMode === 'restore' || this.syncMode === 'bidirectional') {
         // Download data from cloud
         onProgress && onProgress(80, 'Downloading from cloud...');
-        const files = await this.provider.listFiles(syncPath);
+        let files = [];
+        try {
+          files = await this.provider.listFiles(syncPath);
+        } catch (e) {
+          console.warn('Could not list files for download, assuming empty:', e);
+        }
         
         if (files.length > 0) {
           // Get the most recent file
@@ -319,7 +324,12 @@ class SyncManager {
    */
   async cleanupOldSyncFiles(path, keepCount) {
     try {
-      const files = await this.provider.listFiles(path);
+      let files = [];
+      try {
+        files = await this.provider.listFiles(path);
+      } catch (e) {
+        return; // Skip if directory doesn't exist yet
+      }
       const syncFiles = files
         .filter(f => f.name.startsWith('bbs-memo-sync-') && f.name.endsWith('.zip'))
         .sort((a, b) => new Date(b.client_modified) - new Date(a.client_modified));
@@ -368,7 +378,7 @@ class SyncManager {
   async saveMetadata() {
     try {
       await this.db.put('settings', {
-        id: 'cloud_sync_metadata',
+        key: 'cloud_sync_metadata',
         value: this.syncMetadata
       });
     } catch (e) {

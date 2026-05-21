@@ -2,7 +2,7 @@
  * BBS Memo - Service Worker for PWA
  */
 
-const CACHE_NAME = 'bbs-memo-v2';
+const CACHE_NAME = 'bbs-memo-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -53,9 +53,9 @@ self.addEventListener('activate', (event) => {
 // Fetch event - serve from cache, fall back to network
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests for external APIs
-  if (!event.request.url.startsWith(self.location.origin) && 
-      !event.request.url.includes('fonts.googleapis.com') && 
-      !event.request.url.includes('cdnjs.cloudflare.com')) {
+  if (!event.request.url.startsWith(self.location.origin) &&
+    !event.request.url.includes('fonts.googleapis.com') &&
+    !event.request.url.includes('cdnjs.cloudflare.com')) {
     return;
   }
 
