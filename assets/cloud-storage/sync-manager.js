@@ -59,51 +59,63 @@ class SyncManager {
     const zip = new JSZip();
     const data = {};
 
+    // Helper: safely get all records from a store (skips if store doesn't exist)
+    const safeGetAll = async (storeName) => {
+      try {
+        return await this.db.getAll(storeName);
+      } catch (e) {
+        console.warn(`[SyncManager] Store '${storeName}' not found, skipping.`, e.message);
+        return [];
+      }
+    };
+
     // Export boards
     if (this.syncOptions.boards) {
-      data.boards = await this.db.getAll('boards');
+      data.boards = await safeGetAll('boards');
     }
 
     // Export threads
     if (this.syncOptions.threads) {
-      data.threads = await this.db.getAll('threads');
+      data.threads = await safeGetAll('threads');
     }
 
     // Export posts
     if (this.syncOptions.posts) {
-      data.posts = await this.db.getAll('posts');
+      data.posts = await safeGetAll('posts');
     }
 
     // Export files
     if (this.syncOptions.files) {
-      const files = await this.db.getAll('files');
+      const files = await safeGetAll('files');
       data.files = files;
-      
-      // Add files to ZIP
-      const filesFolder = zip.folder('files');
-      for (const file of files) {
-        try {
-          const base64Data = file.content.split(',')[1];
-          const binaryData = atob(base64Data);
-          const bytes = new Uint8Array(binaryData.length);
-          for (let i = 0; i < binaryData.length; i++) {
-            bytes[i] = binaryData.charCodeAt(i);
+
+      if (files.length > 0) {
+        // Add files to ZIP
+        const filesFolder = zip.folder('files');
+        for (const file of files) {
+          try {
+            const base64Data = file.content.split(',')[1];
+            const binaryData = atob(base64Data);
+            const bytes = new Uint8Array(binaryData.length);
+            for (let i = 0; i < binaryData.length; i++) {
+              bytes[i] = binaryData.charCodeAt(i);
+            }
+            filesFolder.file(`${file.id}_${file.name}`, bytes);
+          } catch (e) {
+            console.error('Failed to add file to ZIP:', file.name, e);
           }
-          filesFolder.file(`${file.id}_${file.name}`, bytes);
-        } catch (e) {
-          console.error('Failed to add file to ZIP:', file.name, e);
         }
       }
     }
 
     // Export settings
     if (this.syncOptions.settings) {
-      data.settings = await this.db.getAll('settings');
+      data.settings = await safeGetAll('settings');
     }
 
     // Export archives
     if (this.syncOptions.archives) {
-      data.archived_threads = await this.db.getAll('archived_threads');
+      data.archived_threads = await safeGetAll('archived_threads');
     }
 
     // Add metadata
@@ -211,6 +223,12 @@ class SyncManager {
    * @param {Object} result - Import result object
    */
   async importItems(storeName, items, result) {
+    // Check if the store exists before iterating
+    if (this.db.db && !this.db.db.objectStoreNames.contains(storeName)) {
+      console.warn(`[SyncManager] Import skipped: store '${storeName}' does not exist in this DB version.`);
+      return;
+    }
+
     for (const item of items) {
       try {
         const existing = await this.db.get(storeName, item.id);
