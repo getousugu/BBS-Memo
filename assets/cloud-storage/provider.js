@@ -7,7 +7,7 @@ class CloudStorageProvider {
   constructor(config) {
     this.config = config;
     this.accessToken = null;
-    this.refreshToken = null;
+    this._refreshToken = null;
     this.tokenExpiry = null;
   }
 
@@ -18,7 +18,7 @@ class CloudStorageProvider {
   initialize(tokens) {
     if (tokens) {
       this.accessToken = tokens.accessToken;
-      this.refreshToken = tokens.refreshToken;
+      this._refreshToken = tokens.refreshToken;
       this.tokenExpiry = tokens.expiry;
     }
   }
@@ -112,7 +112,7 @@ class CloudStorageProvider {
   getTokens() {
     return {
       accessToken: this.accessToken,
-      refreshToken: this.refreshToken,
+      refreshToken: this._refreshToken,
       expiry: this.tokenExpiry
     };
   }
@@ -122,7 +122,7 @@ class CloudStorageProvider {
    */
   clearTokens() {
     this.accessToken = null;
-    this.refreshToken = null;
+    this._refreshToken = null;
     this.tokenExpiry = null;
   }
 
@@ -146,7 +146,7 @@ class CloudStorageProvider {
 
     if (response.status === 401) {
       // Token expired, try to refresh
-      if (this.refreshToken) {
+      if (this._refreshToken) {
         await this.refreshToken();
         headers['Authorization'] = `Bearer ${this.accessToken}`;
         return fetch(url, { ...options, headers });

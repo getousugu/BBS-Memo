@@ -1620,13 +1620,15 @@ function setupGlobalEventListeners() {
     }
   };
 
-  document.getElementById("settings-fetched-models-select").onchange = (e) => {
+  document.getElementById("settings-fetched-models-select").onchange = async (e) => {
     document.getElementById("settings-ai-model").value = e.target.value;
+    await saveSetting("aiModel", e.target.value);
+    applySettingsToDOM();
   };
 
   // Save Settings panel configuration
   document.querySelectorAll("#view-settings input, #view-settings select, #view-settings textarea").forEach(el => {
-    if (el.id === "import-file") return;
+    if (el.id === "import-file" || el.id === "settings-fetched-models-select") return;
 
     el.onchange = async () => {
       let key = "";
@@ -2276,8 +2278,8 @@ async function triggerAIResponse(thread) {
   aiTimers[thread.id] = setTimeout(async () => {
     try {
       const activeThread = await state.db.get("threads", thread.id);
-      // Double check active state
-      if (!activeThread || activeThread.isArchived || activeThread.postCount >= 1000) return;
+      // Double check active state and AI enabled status
+      if (!activeThread || activeThread.isArchived || activeThread.postCount >= 1000 || !activeThread.aiEnabled) return;
 
       // Retrieve full chat history
       const posts = await state.db.getPostsByThread(thread.id);
@@ -2318,6 +2320,11 @@ async function triggerAIResponse(thread) {
         renderThreadDetail(activeThread.id);
       }
 
+      // Schedule next AI response if still active and enabled
+      if (activeThread.aiEnabled && !activeThread.isArchived && activeThread.postCount < 1000) {
+        triggerAIResponse(activeThread);
+      }
+
     } catch (e) {
       console.error("AI writing failed:", e);
     }
@@ -2351,7 +2358,8 @@ async function callLLMAPI(thread, posts) {
   let reply = "";
 
   if (provider === "gemini") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const modelName = model.startsWith("models/") ? model : `models/${model}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${key}`;
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2771,7 +2779,7 @@ function updateAuthStatus() {
 
 async function handleOAuthCallback(providerName, code) {
   try {
-const redirectUri = 'https://getousugu.github.io/BBS-Memo/';    
+    const redirectUri = window.location.origin + window.location.pathname;    
     switch (providerName) {
       case 'dropbox':
         await cloudSyncProvider.exchangeCodeForToken(code, redirectUri);
@@ -2964,7 +2972,7 @@ document.getElementById('btn-cloud-sync-auth').addEventListener('click', async (
   const providerName = document.getElementById('cloud-sync-provider').value;
   localStorage.setItem('oauth_pending_provider', providerName);
 
-  const redirectUri = 'https://getousugu.github.io/BBS-Memo/';
+  const redirectUri = window.location.origin + window.location.pathname;
   const authUrl = await cloudSyncProvider.getAuthUrl(redirectUri);
   window.location.href = authUrl;
 });
