@@ -63,7 +63,12 @@ class DropboxProvider extends CloudStorageProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Token exchange failed: ${response.statusText}`);
+      let errorDetail = response.statusText;
+      try {
+        const errData = await response.json();
+        errorDetail = errData.error_description || errData.error || response.statusText;
+      } catch (e) {}
+      throw new Error(`Token exchange failed: ${errorDetail}`);
     }
 
     const data = await response.json();
@@ -99,7 +104,12 @@ class DropboxProvider extends CloudStorageProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Token refresh failed: ${response.statusText}`);
+      let errorDetail = response.statusText;
+      try {
+        const errData = await response.json();
+        errorDetail = errData.error_description || errData.error || response.statusText;
+      } catch (e) {}
+      throw new Error(`Token refresh failed: ${errorDetail}`);
     }
 
     const data = await response.json();
