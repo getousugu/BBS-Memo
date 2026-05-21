@@ -217,8 +217,8 @@ class SyncManager {
 
         if (existing) {
           // Conflict resolution based on timestamp
-          const existingTime = new Date(existing.updated_at || existing.created_at);
-          const newTime = new Date(item.updated_at || item.created_at);
+          const existingTime = new Date(existing.updatedAt || existing.createdAt || existing.updated_at || existing.created_at || existing.lastPostAt || 0);
+          const newTime = new Date(item.updatedAt || item.createdAt || item.updated_at || item.created_at || item.lastPostAt || 0);
 
           if (this.syncMode === 'restore' || newTime > existingTime) {
             await this.db.put(storeName, item);

@@ -2819,7 +2819,7 @@ async function saveCloudSyncSettings() {
   syncManager.setSyncOptions(options);
   
   const settings = {
-    id: 'cloud_sync_settings',
+    key: 'cloud_sync_settings',
     provider: provider,
     mode: mode,
     options: options,
