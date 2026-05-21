@@ -2959,7 +2959,11 @@ document.getElementById('btn-cloud-sync-auth').addEventListener('click', async (
     alert('プロバイダを選択してください');
     return;
   }
-  
+
+  // リダイレクト後にプロバイダ名を復元できるようlocalStorageに保存
+  const providerName = document.getElementById('cloud-sync-provider').value;
+  localStorage.setItem('oauth_pending_provider', providerName);
+
   const redirectUri = 'https://getousugu.github.io/BBS-Memo/';
   const authUrl = await cloudSyncProvider.getAuthUrl(redirectUri);
   window.location.href = authUrl;
@@ -2986,12 +2990,25 @@ document.getElementById('sync-archives').addEventListener('change', saveCloudSyn
 window.addEventListener('load', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
-  const provider = urlParams.get('provider');
-  
-  if (code && provider) {
-    await handleOAuthCallback(provider, code);
+
+  // Dropboxはcodeしか返さないため、プロバイダ名はlocalStorageから取得する
+  const pendingProvider = localStorage.getItem('oauth_pending_provider');
+
+  if (code && pendingProvider) {
+    // 溈みフラグを先に削除（二重処理防止）
+    localStorage.removeItem('oauth_pending_provider');
+
+    // ページリロードでプロバイダがnullになっているので再初期化
+    await initializeProvider(pendingProvider);
+
+    // DOMのselectも正しい値に復元する（saveCloudSyncSettingsが読み取るため）
+    document.getElementById('cloud-sync-provider').value = pendingProvider;
+    const authSection = document.getElementById('cloud-sync-auth-section');
+    if (authSection) authSection.classList.remove('hidden');
+
+    await handleOAuthCallback(pendingProvider, code);
   }
-  
+
   // Initialize cloud sync
   await initializeCloudSync();
 });
