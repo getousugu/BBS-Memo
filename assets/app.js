@@ -2823,43 +2823,116 @@ async function saveCloudSyncSettings() {
   await syncManager.saveMetadata();
 }
 
+// 同期中にUI全体をロック/アンロックするヘルパー
+function setSyncUILocked(locked) {
+  const syncBtn = document.getElementById('btn-cloud-sync-now');
+  const progressDiv = document.getElementById('sync-progress');
+  const progressBar = document.getElementById('sync-progress-bar');
+  const progressFill = document.getElementById('sync-progress-bar');
+  const syncCard = document.querySelector('#cloud-sync-options-section');
+
+  // ロック対象の入力要素
+  const lockTargets = [
+    'cloud-sync-mode',
+    'sync-boards',
+    'sync-files',
+    'sync-settings',
+    'sync-archives',
+    'auto-sync-enabled',
+    'btn-cloud-sync-disconnect'
+  ];
+
+  if (locked) {
+    // ボタンをスピナー状態にする
+    syncBtn.disabled = true;
+    syncBtn.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> 同期中...';
+    syncBtn.classList.add('sync-btn-loading');
+
+    // オプション類を無効化
+    lockTargets.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+
+    // カードに同期中クラスを付与
+    if (syncCard) syncCard.classList.add('syncing');
+
+    // プログレスバーをリセット表示
+    progressBar.style.width = '0%';
+    progressBar.className = 'progress-fill';
+    progressDiv.classList.remove('hidden');
+    progressDiv.classList.remove('sync-done', 'sync-error');
+
+  } else {
+    // ボタンを元に戻す
+    syncBtn.disabled = false;
+    syncBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> 今すぐ同期';
+    syncBtn.classList.remove('sync-btn-loading');
+
+    // オプション類を再有効化
+    lockTargets.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+
+    // 同期中クラスを削除
+    if (syncCard) syncCard.classList.remove('syncing');
+  }
+}
+
 async function performSync() {
   if (!syncManager || !cloudSyncProvider || !cloudSyncProvider.isAuthorized()) {
     alert('クラウド同期を有効にするには、先に認証を行ってください');
     return;
   }
-  
+
   const progressDiv = document.getElementById('sync-progress');
   const progressBar = document.getElementById('sync-progress-bar');
   const progressText = document.getElementById('sync-progress-text');
-  
-  progressDiv.classList.remove('hidden');
-  
+
+  // UIをロック
+  setSyncUILocked(true);
+
   try {
     await syncManager.sync((percent, message) => {
       progressBar.style.width = percent + '%';
       progressText.textContent = message || '同期中...';
     });
-    
+
     await saveCloudSyncSettings();
-    
-    // Update last sync time
+
+    // 最終同期時刻を更新
     if (syncManager.syncMetadata.lastSyncTime) {
       const lastSync = new Date(syncManager.syncMetadata.lastSyncTime);
       document.getElementById('last-sync-time').textContent = lastSync.toLocaleString('ja-JP');
     }
-    
-    progressText.textContent = '同期完了';
+
+    // 完了表示
+    progressBar.style.width = '100%';
+    progressBar.className = 'progress-fill sync-fill-done';
+    progressText.innerHTML = '<i class="fa-solid fa-circle-check"></i> 同期完了！';
+    progressDiv.classList.add('sync-done');
+
     setTimeout(() => {
+      setSyncUILocked(false);
       progressDiv.classList.add('hidden');
-    }, 2000);
-    
+      progressDiv.classList.remove('sync-done');
+    }, 2200);
+
   } catch (err) {
     console.error('Sync error:', err);
-    progressText.textContent = '同期失敗: ' + err.message;
+
+    // 失敗表示
+    progressBar.style.width = '100%';
+    progressBar.className = 'progress-fill sync-fill-error';
+    progressText.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> 同期失敗: ${err.message}`;
+    progressDiv.classList.add('sync-error');
+
     setTimeout(() => {
+      setSyncUILocked(false);
       progressDiv.classList.add('hidden');
-    }, 3000);
+      progressDiv.classList.remove('sync-error');
+    }, 3500);
   }
 }
 

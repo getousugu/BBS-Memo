@@ -100,6 +100,325 @@
   --shadow-lg: 0 0 20px rgba(0,255,102,0.3);
 }
 
+/* ==========================================================================
+   2ch 完全再現テーマ (レトロ)
+   ========================================================================== */
+.theme-retro {
+  /* --- カラー変数 --- */
+  --bg-app:        #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-alt:   #eeeeee;
+  --text-main:     #000000;
+  --text-muted:    #444444;
+  --accent-color:  #800000;   /* 2chのヘッダー：えんじ色 */
+  --accent-hover:  #aa0000;
+  --accent-light:  #fff0f0;
+  --border-color:  #aaaaaa;
+  --post-bg-odd:   #ffffff;
+  --post-bg-even:  #f0f0f0;  /* 2chの偶数レス背景 */
+  --post-border:   #aaaaaa;
+  --anchor-color:  #0000cc;  /* クラシックな青リンク */
+  --quote-color:   #008000;  /* 引用の緑 */
+  --timer-ok:      #008000;
+  --timer-warn:    #cc6600;
+  --timer-alert:   #cc0000;
+  --shadow-sm:     none;
+  --shadow-md:     none;
+  --shadow-lg:     none;
+
+  /* --- フォント: システムフォントを強制 --- */
+  font-family: 'MS PGothic', 'Osaka', 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif !important;
+}
+
+/* ヘッダー: 2ch風えんじ色バー */
+.theme-retro .app-header {
+  background-color: #800000;
+  border-bottom: 2px solid #4d0000;
+  box-shadow: none;
+}
+
+/* フォントをUI全体に強制 */
+.theme-retro,
+.theme-retro input,
+.theme-retro select,
+.theme-retro textarea,
+.theme-retro button {
+  font-family: 'MS PGothic', 'Osaka', 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif !important;
+}
+
+/* 角丸を完全撤廃 */
+.theme-retro .settings-card,
+.theme-retro .board-card,
+.theme-retro .thread-card,
+.theme-retro .thread-detail-header,
+.theme-retro .modal-content,
+.theme-retro .post-form-container,
+.theme-retro .warning-banner,
+.theme-retro .storage-dashboard,
+.theme-retro .auth-status,
+.theme-retro .sync-status-info,
+.theme-retro .search-form-box,
+.theme-retro .search-result-item,
+.theme-retro .sync-progress,
+.theme-retro .board-desc-box,
+.theme-retro .btn,
+.theme-retro input,
+.theme-retro select,
+.theme-retro textarea,
+.theme-retro .tag-badge,
+.theme-retro .badge,
+.theme-retro .thread-card-progress-bar,
+.theme-retro .storage-bar-fill,
+.theme-retro .progress-fill {
+  border-radius: 0 !important;
+}
+
+/* ボックスシャドウを完全撤廃 */
+.theme-retro .settings-card,
+.theme-retro .board-card,
+.theme-retro .thread-card,
+.theme-retro .thread-detail-header,
+.theme-retro .modal-content,
+.theme-retro .app-header,
+.theme-retro .app-nav-bar,
+.theme-retro .post-form-container {
+  box-shadow: none !important;
+}
+
+/* 板カード: クラシックなボーダーbox */
+.theme-retro .board-card {
+  border: 2px solid #aaaaaa;
+  background-color: #ffffff;
+  height: auto;
+  min-height: 100px;
+}
+
+.theme-retro .board-card:hover {
+  transform: none;
+  border-color: #800000;
+  background-color: #fff8f8;
+}
+
+.theme-retro .board-card-info h3 {
+  color: #800000;
+}
+
+/* スレカード: 2ch掲示板っぽいリスト表示 */
+.theme-retro .thread-card {
+  border: 1px solid #aaaaaa;
+  border-left: 3px solid #800000;
+  border-radius: 0 !important;
+}
+
+.theme-retro .thread-card:hover {
+  transform: none;
+  background-color: #fffafa;
+  border-left-color: #cc0000;
+}
+
+/* レス投稿: 2ch掲示板の投稿スタイル */
+.theme-retro .post-item {
+  border: 1px solid #aaaaaa;
+  border-radius: 0 !important;
+  margin-bottom: 2px;
+  padding: 6px 10px;
+}
+
+.theme-retro .post-item:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.theme-retro .post-item:nth-child(even) {
+  background-color: #f0f0f0;
+}
+
+.theme-retro .post-header {
+  background-color: #e0e0e0;
+  border-bottom: 1px solid #aaaaaa;
+  margin: -6px -10px 6px -10px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+.theme-retro .post-name {
+  color: #008040;        /* 名前: クラシック緑 */
+  font-weight: bold;
+}
+
+.theme-retro .post-name.ai-post {
+  color: #800000;
+}
+
+.theme-retro .post-num {
+  color: #800000;
+  font-weight: bold;
+}
+
+/* ナビゲーションバー (モバイル) */
+.theme-retro .app-nav-bar {
+  border-top: 2px solid #800000;
+  background-color: #eeeeee;
+}
+
+.theme-retro .nav-item.active {
+  background-color: #ffffff;
+  border-top: 2px solid #800000;
+  color: #800000;
+}
+
+/* ボタン: フラットなWindows 98風 */
+.theme-retro .btn-primary {
+  background-color: #800000;
+  border: 2px outset #cc4444;
+}
+
+.theme-retro .btn-primary:hover {
+  background-color: #aa0000;
+  border-style: inset;
+}
+
+.theme-retro .btn-secondary {
+  background-color: #dddddd;
+  border: 2px outset #eeeeee;
+  color: #000000;
+}
+
+.theme-retro .btn-secondary:hover {
+  background-color: #cccccc;
+  border-style: inset;
+}
+
+.theme-retro .btn-success {
+  background-color: #006600;
+  border: 2px outset #00aa00;
+}
+
+.theme-retro .btn-danger {
+  background-color: #880000;
+  border: 2px outset #cc0000;
+}
+
+/* settings-card の見出し */
+.theme-retro .settings-card h3 {
+  color: #800000;
+  border-bottom: 2px solid #800000;
+  background-color: #fff0f0;
+  margin: -20px -20px 16px -20px;
+  padding: 8px 20px;
+}
+
+/* バッジ */
+.theme-retro .badge {
+  border-radius: 0 !important;
+  border: 1px solid #aaaaaa;
+}
+
+.theme-retro .badge-ai {
+  background-color: #fff0f0;
+  color: #800000;
+}
+
+.theme-retro .tag-badge {
+  background-color: #eeeeee;
+  border: 1px solid #aaaaaa;
+  color: #333333;
+}
+
+/* タイマープログレスバー */
+.theme-retro .thread-card-progress {
+  height: 4px;
+  background-color: #cccccc;
+}
+
+.theme-retro .thread-card-progress-bar {
+  background-color: #008000;
+}
+
+/* モーダル */
+.theme-retro .modal-content {
+  border: 2px solid #800000;
+}
+
+.theme-retro .modal-header {
+  background-color: #800000;
+  color: #ffffff;
+  border-bottom: 2px solid #4d0000;
+}
+
+.theme-retro .modal-header h3 {
+  color: #ffffff;
+}
+
+.theme-retro .modal-header h3 i {
+  color: #ffcccc;
+}
+
+.theme-retro .modal-close-btn {
+  color: #ffffff;
+}
+
+/* フォーム入力 */
+.theme-retro .settings-card input[type="text"],
+.theme-retro .settings-card input[type="password"],
+.theme-retro .settings-card input[type="number"],
+.theme-retro .settings-card select,
+.theme-retro .settings-card textarea,
+.theme-retro #post-body,
+.theme-retro #post-name,
+.theme-retro #post-email,
+.theme-retro #search-query {
+  border: 1px inset #888888;
+  background-color: #ffffff;
+}
+
+/* スレ詳細ヘッダー */
+.theme-retro .thread-detail-header {
+  border: 1px solid #aaaaaa;
+  border-top: 3px solid #800000;
+  background-color: #f8f0f0;
+}
+
+.theme-retro .thread-timer-box {
+  background-color: #eeeeee;
+  border: 1px solid #aaaaaa;
+}
+
+/* ロゴ */
+.theme-retro .logo {
+  font-family: 'MS PGothic', 'Osaka', sans-serif !important;
+  font-size: 18px;
+  font-weight: normal;
+  letter-spacing: 0;
+}
+
+.theme-retro .logo-sub {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* スクロールバー (webkit) */
+.theme-retro ::-webkit-scrollbar {
+  width: 16px;
+  background-color: #cccccc;
+}
+
+.theme-retro ::-webkit-scrollbar-thumb {
+  background-color: #aaaaaa;
+  border: 1px solid #888888;
+}
+
+/* 過去ログバッジ */
+.theme-retro .badge-archived {
+  background-color: #dddddd;
+  border: 1px solid #999999;
+  border-radius: 0 !important;
+}
+
+/* 選択された板のホバーアニメーション無効 */
+.theme-retro .board-card:hover {
+  transform: none !important;
+}
+
 /* --- Global Reset & Reset Defaults --- */
 * {
   box-sizing: border-box;
@@ -1527,6 +1846,21 @@ body.font-large input, body.font-large select, body.font-large textarea, body.fo
 
 .sync-progress {
   margin-top: 16px;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--bg-card-alt);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.sync-progress.sync-done {
+  background-color: rgba(46, 204, 113, 0.12);
+  border-color: #2ecc71;
+}
+
+.sync-progress.sync-error {
+  background-color: rgba(231, 76, 60, 0.12);
+  border-color: #e74c3c;
 }
 
 .progress-bar {
@@ -1541,7 +1875,17 @@ body.font-large input, body.font-large select, body.font-large textarea, body.fo
   height: 100%;
   background-color: var(--accent-color);
   border-radius: 4px;
-  transition: width 0.3s ease-out;
+  transition: width 0.4s ease-out, background-color 0.3s;
+}
+
+/* 完了時: 緑 */
+.progress-fill.sync-fill-done {
+  background-color: #2ecc71;
+}
+
+/* 失敗時: 赤 */
+.progress-fill.sync-fill-error {
+  background-color: #e74c3c;
 }
 
 .sync-progress p {
@@ -1549,6 +1893,49 @@ body.font-large input, body.font-large select, body.font-large textarea, body.fo
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color 0.3s;
+}
+
+.sync-progress.sync-done p {
+  color: #27ae60;
+  font-weight: 700;
+}
+
+.sync-progress.sync-error p {
+  color: #e74c3c;
+  font-weight: 700;
+}
+
+/* 同期中: ボタンのローディング状態 */
+.btn.sync-btn-loading {
+  opacity: 0.75;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 同期中: オプションセクション全体をやや暗くする */
+#cloud-sync-options-section.syncing {
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+#cloud-sync-options-section.syncing .sync-actions,
+#cloud-sync-options-section.syncing .sync-progress {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* 同期中: disabled な入力要素のスタイル */
+#cloud-sync-options-section select:disabled,
+#cloud-sync-options-section input:disabled,
+#cloud-sync-options-section button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.4);
 }
 
 /* --- Modals --- */
